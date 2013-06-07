@@ -45,7 +45,6 @@ describe('Poop', function () {
         server.pack.require('../', function (err) {
 
             expect(err).to.not.exist;
-            expect(server.plugins.poop).to.exist;
             process.removeAllListeners('uncaughtException');
             done();
         });
@@ -58,7 +57,6 @@ describe('Poop', function () {
         server.pack.require('../', { logPath: logPath }, function (err) {
 
             expect(err).to.not.exist;
-            expect(server.plugins.poop).to.exist;
             var exit = process.exit;
 
             process.exit = function (code) {
@@ -70,6 +68,7 @@ describe('Poop', function () {
 
                 done();
             };
+
             process.emit('uncaughtException', new Error('test'));
         });
     });
