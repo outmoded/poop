@@ -72,4 +72,39 @@ describe('Poop', function () {
             process.emit('uncaughtException', new Error('test'));
         });
     });
+
+    it('can handle SIGUSR2 events', function (done) {
+
+        Fs.readdir(Path.join(__dirname, '..'), function (err, files) {
+
+            var heapsBefore = 0;
+            for (var i = 0, il = files.length; i < il; ++i) {
+                if (files[i].indexOf('heapdump-') === 0) {
+                    heapsBefore++;
+                }
+            }
+
+            var server = new Hapi.Server();
+            server.pack.require('../', function (err) {
+
+                expect(err).to.not.exist;
+                process.removeAllListeners('uncaughtException');
+                process.emit('SIGUSR2');
+
+                Fs.readdir(Path.join(__dirname, '..'), function (err, files) {
+
+                    var heapsAfter = 0;
+                    for (var i = 0, il = files.length; i < il; ++i) {
+                        if (files[i].indexOf('heapdump-') === 0) {
+                            heapsAfter++;
+                        }
+                    }
+
+                    expect(heapsAfter - heapsBefore).to.be.greaterThan(1);
+                    done();
+                });
+            });
+        });
+
+    });
 });
