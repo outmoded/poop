@@ -73,7 +73,7 @@ describe('Poop', function () {
         });
     });
 
-    it('can handle SIGUSR2 events', function (done) {
+    it('can handle SIGUSR1 events', function (done) {
 
         Fs.readdir(Path.join(__dirname, '..'), function (err, files) {
 
@@ -89,7 +89,7 @@ describe('Poop', function () {
 
                 expect(err).to.not.exist;
                 process.removeAllListeners('uncaughtException');
-                process.emit('SIGUSR2');
+                process.emit('SIGUSR1');
 
                 Fs.readdir(Path.join(__dirname, '..'), function (err, files) {
 
@@ -105,6 +105,5 @@ describe('Poop', function () {
                 });
             });
         });
-
     });
 });
