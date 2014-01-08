@@ -22,6 +22,23 @@ var it = Lab.test;
 
 describe('Poop', function () {
 
+    var logPath = __dirname + '/test1.log';
+    var server;
+    before(function (done) {
+
+        server = new Hapi.Server();
+        server.pack.require('../', { logPath: logPath }, function (err) {
+
+            expect(err).to.not.exist;
+            var other = new Hapi.Server();
+            other.pack.require('../', { logPath: logPath }, function (err) {
+
+                expect(err).to.not.exist;
+                done();
+            });
+        });
+    });
+
     after(function (done) {
 
         Fs.readdir(Path.join(__dirname, '..'), function (err, files) {
@@ -34,76 +51,44 @@ describe('Poop', function () {
                 }
             }
 
-            expect(heaps).to.equal(4);
-            done();
-        });
-    });
-
-    it('can be included as a plugin', function (done) {
-
-        var server = new Hapi.Server();
-        server.pack.require('../', function (err) {
-
-            expect(err).to.not.exist;
-            process.removeAllListeners('uncaughtException');
             done();
         });
     });
 
     it('can log uncaught exceptions to the file provided and exits process', function (done) {
 
-        var logPath = __dirname + '/test1.log';
-        var server = new Hapi.Server();
-        server.pack.require('../', { logPath: logPath }, function (err) {
+        var orig = process.exit;
+        process.exit = function (code) {
 
-            expect(err).to.not.exist;
-            var exit = process.exit;
+            process.exit = orig;
+            expect(code).to.equal(1);
+            expect(Fs.existsSync(logPath));
+            Fs.unlinkSync(logPath);
 
-            process.exit = function (code) {
+            done();
+        };
 
-                expect(code).to.equal(1);
-                expect(Fs.existsSync(logPath));
-                Fs.unlinkSync(logPath);
-                process.exit = exit;
-
-                done();
-            };
-
-            process.emit('uncaughtException', new Error('test'));
-        });
+        process.emit('uncaughtException', new Error('test'));
     });
 
     it('can handle SIGUSR1 events', function (done) {
 
-        Fs.readdir(Path.join(__dirname, '..'), function (err, files) {
+        setTimeout(function () {
 
-            var heapsBefore = 0;
-            for (var i = 0, il = files.length; i < il; ++i) {
-                if (files[i].indexOf('heapdump-') === 0) {
-                    heapsBefore++;
-                }
-            }
+            process.emit('SIGUSR1');
 
-            var server = new Hapi.Server();
-            server.pack.require('../', function (err) {
+            Fs.readdir(Path.join(__dirname, '..'), function (err, files) {
 
-                expect(err).to.not.exist;
-                process.removeAllListeners('uncaughtException');
-                process.emit('SIGUSR1');
-
-                Fs.readdir(Path.join(__dirname, '..'), function (err, files) {
-
-                    var heapsAfter = 0;
-                    for (var i = 0, il = files.length; i < il; ++i) {
-                        if (files[i].indexOf('heapdump-') === 0) {
-                            heapsAfter++;
-                        }
+                var heapsAfter = 0;
+                for (var i = 0, il = files.length; i < il; ++i) {
+                    if (files[i].indexOf('heapdump-') === 0) {
+                        heapsAfter++;
                     }
+                }
 
-                    expect(heapsAfter - heapsBefore).to.be.greaterThan(1);
-                    done();
-                });
+                expect(heapsAfter).to.equal(2);
+                done();
             });
-        });
+        }, 500);
     });
 });
