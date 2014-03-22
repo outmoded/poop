@@ -1,7 +1,7 @@
 {
   "name": "poop",
   "description": "Plugin for taking a process dump on uncaught exception",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "author": "Eran Hammer <eran@hueniverse.com> (http://hueniverse.com)",
   "repository": "git://github.com/spumko/poop",
   "main": "index",
@@ -19,10 +19,10 @@
     "hoek": "1.x.x"
   },
   "peerDependencies": {
-    "hapi": "2.x.x"
+    "hapi": ">=2.x.x"
   },
   "devDependencies": {
-    "hapi": "2.x.x",
+    "hapi": "3.x.x",
     "lab": "1.x.x"
   },
   "scripts": {
