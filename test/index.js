@@ -97,4 +97,10 @@ describe('Poop', function () {
             });
         }, 500);
     });
+
+    it('can handle null options in register()', function (done) {
+        var Poop = require('../');
+
+        Poop.register({}, null, done);
+    });
 });
