@@ -27,11 +27,17 @@ describe('Poop', function () {
     before(function (done) {
 
         server = new Hapi.Server();
-        server.pack.require('../', { logPath: logPath }, function (err) {
+        server.pack.register({
+            plugin: require('../'),
+            options: { logPath: logPath }
+        }, function (err) {
 
             expect(err).to.not.exist;
             var other = new Hapi.Server();
-            other.pack.require('../', { logPath: logPath }, function (err) {
+            other.pack.register({
+                plugin: require('../'),
+                options: { logPath: logPath }
+            }, function (err) {
 
                 expect(err).to.not.exist;
                 done();
