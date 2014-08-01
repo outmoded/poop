@@ -5,6 +5,8 @@
 
 [![Build Status](https://secure.travis-ci.org/spumko/poop.png)](http://travis-ci.org/spumko/poop)
 
+Lead Maintainer: [Colin Ihrig](https://github.com/cjihrig)
+
 
 The following options are available when configuring _'poop'_:
 
