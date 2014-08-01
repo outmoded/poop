@@ -1,9 +1,9 @@
-<a href="https://github.com/spumko"><img src="https://raw.github.com/spumko/spumko/master/images/from.png" align="right" /></a>
-![poop Logo](https://raw.github.com/spumko/poop/master/images/poop.png)
+<a href="https://github.com/hapijs"><img src="https://raw.github.com/spumko/spumko/master/images/from.png" align="right" /></a>
+![poop Logo](https://raw.github.com/hapijs/poop/master/images/poop.png)
 
-[**hapi**](https://github.com/spumko/hapi) plugin for taking a process dump and cleaning up after an uncaught exception
+[**hapi**](https://github.com/hapijs/hapi) plugin for taking a process dump and cleaning up after an uncaught exception
 
-[![Build Status](https://secure.travis-ci.org/spumko/poop.png)](http://travis-ci.org/spumko/poop)
+[![Build Status](https://secure.travis-ci.org/hapijs/poop.png)](http://travis-ci.org/hapijs/poop)
 
 Lead Maintainer: [Colin Ihrig](https://github.com/cjihrig)
 
