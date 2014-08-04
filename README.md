@@ -1,4 +1,3 @@
-<a href="https://github.com/hapijs"><img src="https://raw.github.com/spumko/spumko/master/images/from.png" align="right" /></a>
 ![poop Logo](https://raw.github.com/hapijs/poop/master/images/poop.png)
 
 [**hapi**](https://github.com/hapijs/hapi) plugin for taking a process dump and cleaning up after an uncaught exception
