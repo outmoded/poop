@@ -1,7 +1,7 @@
 {
   "name": "poop",
   "description": "Plugin for taking a process dump on uncaught exception",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "author": "Eran Hammer <eran@hueniverse.com> (http://hueniverse.com)",
   "repository": "git://github.com/hapijs/poop",
   "main": "index",
