@@ -2,6 +2,7 @@
 
 [**hapi**](https://github.com/hapijs/hapi) plugin for taking a process dump and cleaning up after an uncaught exception
 
+[![Current Version](https://img.shields.io/npm/v/poop.svg)](https://www.npmjs.org/package/poop)
 [![Build Status](https://secure.travis-ci.org/hapijs/poop.png)](http://travis-ci.org/hapijs/poop)
 
 Lead Maintainer: [Colin Ihrig](https://github.com/cjihrig)
