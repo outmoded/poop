@@ -1,5 +1,6 @@
 // Load modules
 
+var Code = require('code');
 var Lab = require('lab');
 var Fs = require('fs');
 var Hapi = require('hapi');
@@ -14,7 +15,7 @@ var internals = {};
 // Test shortcuts
 
 var lab = exports.lab = Lab.script();
-var expect = Lab.expect;
+var expect = Code.expect;
 var before = lab.before;
 var after = lab.after;
 var describe = lab.describe;
@@ -31,14 +32,14 @@ before(function (done) {
         options: { logPath: logPath }
     }, function (err) {
 
-        expect(err).to.not.exist;
+        expect(err).to.not.exist();
         var other = new Hapi.Server();
         other.pack.register({
             plugin: require('../'),
             options: { logPath: logPath }
         }, function (err) {
 
-            expect(err).to.not.exist;
+            expect(err).to.not.exist();
             done();
         });
     });
