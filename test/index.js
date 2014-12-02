@@ -68,7 +68,7 @@ it('can log uncaught exceptions to the file provided and exits process', functio
 
         process.exit = orig;
         expect(code).to.equal(1);
-        expect(Fs.existsSync(logPath));
+        expect(Fs.existsSync(logPath)).to.be.true();
         Fs.unlinkSync(logPath);
 
         done();
