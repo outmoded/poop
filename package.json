@@ -1,7 +1,7 @@
 {
   "name": "poop",
   "description": "Plugin for taking a process dump on uncaught exception",
-  "version": "1.2.4",
+  "version": "1.2.5",
   "repository": "git://github.com/hapijs/poop",
   "main": "index",
   "keywords": [
@@ -21,7 +21,7 @@
     "hapi": ">=2.x.x"
   },
   "devDependencies": {
-    "hapi": "7.x.x",
+    "hapi": "8.x.x",
     "lab": "5.x.x",
     "code": "1.x.x"
   },
