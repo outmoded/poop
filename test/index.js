@@ -27,15 +27,17 @@ var server;
 before(function (done) {
 
     server = new Hapi.Server();
-    server.pack.register({
-        plugin: require('../'),
+    server.connection();
+    server.register({
+        register: require('../'),
         options: { logPath: logPath }
     }, function (err) {
 
         expect(err).to.not.exist();
         var other = new Hapi.Server();
-        other.pack.register({
-            plugin: require('../'),
+        other.connection();
+        other.register({
+            register: require('../'),
             options: { logPath: logPath }
         }, function (err) {
 
