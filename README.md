@@ -7,11 +7,49 @@
 
 Lead Maintainer: [Colin Ihrig](https://github.com/cjihrig)
 
+## Table of Contents
 
-The following options are available when configuring _'poop'_:
+- [Overview](#overview)
+- [Example](#example)
+- [Settings](#settings)
+    - [`logPath`](#logpath)
 
-- `logPath` - the file path to log any uncaught exception errors.  Defaults to 'poop.log' in the plugin folder.
+## Overview
 
+When an `uncaughtException` is encountered a heap dump will be output to the
+plugin folder. A log file is also written containing the exception details.
+After this is complete the process will exit with a failure code.
 
-When an _'uncaughtException'_ is encountered a heap dump will be output to the plugin folder as well as the exception details.
-After this is complete the process will exit with a 'failure' code.
+## Example
+
+The following example shows how to register and configure **poop**. In this example,
+an uncaught exception is thrown after **poop** is registered. This will trigger a
+heap dump and `poop.log` file to be created.
+
+```javascript
+'use strict';
+
+var Path = require('path');
+var Hapi = require('hapi');
+var Poop = require('poop');
+var server = new Hapi.Server();
+
+server.register({
+    register: Poop,
+    options: {
+        logPath: Path.join(__dirname, 'poop.log')
+    }
+}, function () {
+
+    throw new Error('uncaught');
+});
+```
+
+## Settings
+
+The following options are available when configuring **poop**.
+
+### `logPath`
+
+The file path to log any uncaught exception errors. Defaults to `poop.log` in
+the plugin folder.
