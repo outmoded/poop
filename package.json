@@ -3,7 +3,7 @@
   "description": "Plugin for taking a process dump on uncaught exception",
   "version": "1.2.5",
   "repository": "git://github.com/hapijs/poop",
-  "main": "index",
+  "main": "lib/index",
   "keywords": [
     "hapi",
     "exception",
@@ -29,10 +29,5 @@
     "test": "lab -t 100 -v -L -a code",
     "test-cov-html": "lab -a code -r html -o coverage.html"
   },
-  "licenses": [
-    {
-      "type": "BSD",
-      "url": "http://github.com/hapijs/poop/raw/master/LICENSE"
-    }
-  ]
+  "license": "BSD-3-Clause"
 }

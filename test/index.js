@@ -101,6 +101,7 @@ it('can handle SIGUSR1 events', function (done) {
 });
 
 it('can handle null options in register()', function (done) {
+
     var Poop = require('../');
 
     Poop.register({}, null, done);
