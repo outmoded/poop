@@ -23,6 +23,7 @@ var it = lab.it;
 
 
 var logPath = __dirname + '/test1.log';
+var flags = { flags: 'a' };
 var server;
 before(function (done) {
 
@@ -30,7 +31,10 @@ before(function (done) {
     server.connection();
     server.register({
         register: require('../'),
-        options: { logPath: logPath }
+        options: {
+            logPath: logPath,
+            flags: flags
+        }
     }, function (err) {
 
         expect(err).to.not.exist();
@@ -38,7 +42,10 @@ before(function (done) {
         other.connection();
         other.register({
             register: require('../'),
-            options: { logPath: logPath }
+            options: {
+                logPath: logPath,
+                flags: flags
+            }
         }, function (err) {
 
             expect(err).to.not.exist();
