@@ -17,9 +17,6 @@
     "heapdump": "0.3.x",
     "hoek": "2.x.x"
   },
-  "peerDependencies": {
-    "hapi": ">=2.x.x"
-  },
   "devDependencies": {
     "hapi": "8.x.x",
     "lab": "5.x.x",
