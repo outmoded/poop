@@ -10,49 +10,55 @@ var Path = require('path');
 // Declare internals
 
 var internals = {};
+internals.createServer = function () {
 
+    var server = new Hapi.Server();
+    server.connection();
+    return server;
+};
+internals.registerPlugin = function (connection, pluginOptions, callBack) {
+
+    connection.register({
+        register: require('../'),
+        options: pluginOptions
+    }, function (err) {
+
+        expect(err).to.not.exist();
+        if (callBack) {
+            callBack.call();
+        }
+    });
+};
+internals.logSiguser1 = function (heapsAfterEquals, done) {
+
+    setTimeout(function () {
+
+        process.emit('SIGUSR1');
+
+        Fs.readdir(Path.join(__dirname, '..'), function (err, files) {
+
+            var heapsAfter = 0;
+            for (var i = 0, il = files.length; i < il; ++i) {
+                if (files[i].indexOf('heapdump-') === 0) {
+                    heapsAfter++;
+                }
+            }
+
+            expect(heapsAfter).to.equal(heapsAfterEquals);
+            done();
+        });
+    }, 500);
+};
 
 // Test shortcuts
 
 var lab = exports.lab = Lab.script();
 var expect = Code.expect;
-var before = lab.before;
 var after = lab.after;
-var describe = lab.describe;
 var it = lab.it;
 
-
 var logPath = __dirname + '/test1.log';
-var flags = { flags: 'a' };
-var server;
-before(function (done) {
-
-    server = new Hapi.Server();
-    server.connection();
-    server.register({
-        register: require('../'),
-        options: {
-            logPath: logPath,
-            flags: flags
-        }
-    }, function (err) {
-
-        expect(err).to.not.exist();
-        var other = new Hapi.Server();
-        other.connection();
-        other.register({
-            register: require('../'),
-            options: {
-                logPath: logPath,
-                flags: flags
-            }
-        }, function (err) {
-
-            expect(err).to.not.exist();
-            done();
-        });
-    });
-});
+var streamOptions = { flags: 'a' };
 
 after(function (done) {
 
@@ -70,7 +76,43 @@ after(function (done) {
     });
 });
 
-it('can log uncaught exceptions to the file provided and exits process', function (done) {
+it('can register the plugin with logPath', function (done) {
+
+    var server = internals.createServer();
+    internals.registerPlugin(server, {
+        logPath: logPath
+    }, function () {
+
+        var other = internals.createServer();
+        internals.registerPlugin(other, {
+            logPath: logPath
+        }, done);
+    });
+});
+
+it('can register the plugin with logPath and writeStreamOptions', function (done) {
+
+    var server = internals.createServer();
+    internals.registerPlugin(server, {
+        logPath: logPath,
+        writeStreamOptions: streamOptions
+    }, function () {
+
+        var other = internals.createServer();
+        internals.registerPlugin(other, {
+            logPath: logPath,
+            writeStreamOptions: streamOptions
+        }, done);
+    });
+});
+
+it('can log uncaught exceptions to the file and stream options provided and exits process', function (done) {
+
+    var server = internals.createServer();
+    internals.registerPlugin(server, {
+        logPath: logPath,
+        writeStreamOptions: streamOptions
+    });
 
     var orig = process.exit;
     process.exit = function (code) {
@@ -88,23 +130,21 @@ it('can log uncaught exceptions to the file provided and exits process', functio
 
 it('can handle SIGUSR1 events', function (done) {
 
-    setTimeout(function () {
+    var server = internals.createServer();
+    internals.registerPlugin(server, { logPath: logPath });
 
-        process.emit('SIGUSR1');
+    internals.logSiguser1(2, done);
+});
 
-        Fs.readdir(Path.join(__dirname, '..'), function (err, files) {
+it('can handle SIGUSR1 events using writeStreamOptions', function (done) {
 
-            var heapsAfter = 0;
-            for (var i = 0, il = files.length; i < il; ++i) {
-                if (files[i].indexOf('heapdump-') === 0) {
-                    heapsAfter++;
-                }
-            }
+    var server = internals.createServer();
+    internals.registerPlugin(server, {
+        logPath: logPath,
+        writeStreamOptions: streamOptions
+    });
 
-            expect(heapsAfter).to.equal(2);
-            done();
-        });
-    }, 500);
+    internals.logSiguser1(3, done);
 });
 
 it('can handle null options in register()', function (done) {
