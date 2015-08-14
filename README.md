@@ -45,7 +45,7 @@ server.register({
 });
 ```
 
-It is also possible to override the default write stream options for the log file. Using the previous example, the append flag `a` can be passed to the `register` function to append to the previously logged crash.
+It is also possible to override the default write stream options used to generate the log file. In the previous example, the `a` flag can be passed to `server.register` so exceptions are now appended.
 
 ```javascript
 'use strict';

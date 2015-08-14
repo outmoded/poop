@@ -24,30 +24,10 @@ internals.registerPlugin = function (connection, pluginOptions, callBack) {
     }, function (err) {
 
         expect(err).to.not.exist();
-        if (callBack) {
+        if (typeof callBack === 'function') {
             callBack.call();
         }
     });
-};
-internals.logSiguser1 = function (heapsAfterEquals, done) {
-
-    setTimeout(function () {
-
-        process.emit('SIGUSR1');
-
-        Fs.readdir(Path.join(__dirname, '..'), function (err, files) {
-
-            var heapsAfter = 0;
-            for (var i = 0, il = files.length; i < il; ++i) {
-                if (files[i].indexOf('heapdump-') === 0) {
-                    heapsAfter++;
-                }
-            }
-
-            expect(heapsAfter).to.equal(heapsAfterEquals);
-            done();
-        });
-    }, 500);
 };
 
 // Test shortcuts
@@ -58,7 +38,6 @@ var after = lab.after;
 var it = lab.it;
 
 var logPath = __dirname + '/test1.log';
-var streamOptions = { flags: 'a' };
 
 after(function (done) {
 
@@ -92,6 +71,10 @@ it('can register the plugin with logPath', function (done) {
 
 it('can register the plugin with logPath and writeStreamOptions', function (done) {
 
+    var streamOptions = {
+        flags: 'a',
+        mode: 0644
+    };
     var server = internals.createServer();
     internals.registerPlugin(server, {
         logPath: logPath,
@@ -106,12 +89,15 @@ it('can register the plugin with logPath and writeStreamOptions', function (done
     });
 });
 
-it('can log uncaught exceptions to the file and stream options provided and exits process', function (done) {
+it('can log uncaught exceptions to the file provided with write stream options and exits process', function (done) {
 
     var server = internals.createServer();
     internals.registerPlugin(server, {
         logPath: logPath,
-        writeStreamOptions: streamOptions
+        writeStreamOptions: {
+            flags: 'w',
+            mode: 0766
+        }
     });
 
     var orig = process.exit;
@@ -133,18 +119,23 @@ it('can handle SIGUSR1 events', function (done) {
     var server = internals.createServer();
     internals.registerPlugin(server, { logPath: logPath });
 
-    internals.logSiguser1(2, done);
-});
+    setTimeout(function () {
 
-it('can handle SIGUSR1 events using writeStreamOptions', function (done) {
+        process.emit('SIGUSR1');
 
-    var server = internals.createServer();
-    internals.registerPlugin(server, {
-        logPath: logPath,
-        writeStreamOptions: streamOptions
-    });
+        Fs.readdir(Path.join(__dirname, '..'), function (err, files) {
 
-    internals.logSiguser1(3, done);
+            var heapsAfter = 0;
+            for (var i = 0, il = files.length; i < il; ++i) {
+                if (files[i].indexOf('heapdump-') === 0) {
+                    heapsAfter++;
+                }
+            }
+
+            expect(heapsAfter).to.equal(2);
+            done();
+        });
+    }, 500);
 });
 
 it('can handle null options in register()', function (done) {
