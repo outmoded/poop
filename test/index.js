@@ -5,17 +5,20 @@ var Lab = require('lab');
 var Fs = require('fs');
 var Hapi = require('hapi');
 var Path = require('path');
+var ChildProcess = require('child_process');
 
 
 // Declare internals
 
 var internals = {};
+
 internals.createServer = function () {
 
     var server = new Hapi.Server();
     server.connection();
     return server;
 };
+
 internals.registerPlugin = function (connection, pluginOptions, callBack) {
 
     connection.register({
@@ -30,80 +33,49 @@ internals.registerPlugin = function (connection, pluginOptions, callBack) {
     });
 };
 
+
 // Test shortcuts
 
 var lab = exports.lab = Lab.script();
 var expect = Code.expect;
-var after = lab.after;
 var it = lab.it;
-
+var fork = ChildProcess.fork;
 var logPath = __dirname + '/test1.log';
 
-after(function (done) {
+// Tests
 
-    Fs.readdir(Path.join(__dirname, '..'), function (err, files) {
-
-        var heaps = 0;
-        for (var i = 0, il = files.length; i < il; ++i) {
-            if (files[i].indexOf('heapdump-') === 0) {
-                heaps++;
-                Fs.unlinkSync(Path.join(__dirname, '..', files[i]));
-            }
-        }
-
-        done();
-    });
-});
-
-it('can register the plugin with logPath', function (done) {
+it('can register the plugin', function (done) {
 
     var server = internals.createServer();
     internals.registerPlugin(server, {
         logPath: logPath
-    }, function () {
+    }, function (err) {
+
+        expect(err).to.not.exist();
 
         var other = internals.createServer();
         internals.registerPlugin(other, {
             logPath: logPath
-        }, done);
+        }, function (err) {
+
+            expect(err).to.not.exist();
+            done();
+        });
     });
 });
 
-it('can register the plugin with logPath and writeStreamOptions', function (done) {
-
-    var streamOptions = {
-        flags: 'a',
-        mode: 0644
-    };
-    var server = internals.createServer();
-    internals.registerPlugin(server, {
-        logPath: logPath,
-        writeStreamOptions: streamOptions
-    }, function () {
-
-        var other = internals.createServer();
-        internals.registerPlugin(other, {
-            logPath: logPath,
-            writeStreamOptions: streamOptions
-        }, done);
-    });
-});
-
-it('can log uncaught exceptions to the file provided with write stream options and exits process', function (done) {
+it('can log uncaught exceptions to the file provided and exits process', function (done) {
 
     var server = internals.createServer();
     internals.registerPlugin(server, {
-        logPath: logPath,
-        writeStreamOptions: {
-            flags: 'w',
-            mode: 0766
-        }
+        logPath: logPath
+    }, function (err) {
+
+        expect(err).to.not.exist();
     });
 
-    var orig = process.exit;
     process.exit = function (code) {
 
-        process.exit = orig;
         expect(code).to.equal(1);
         expect(Fs.existsSync(logPath)).to.be.true();
         Fs.unlinkSync(logPath);
@@ -112,6 +84,53 @@ it('can log uncaught exceptions to the file provided with write stream options a
     };
 
     process.emit('uncaughtException', new Error('test'));
+});
+
+it('can log uncaught exceptions to the file provided with write options and exits process', function (done) {
+
+    var child = fork('./test/worker');
+
+    child.send({
+        logPath: logPath,
+        writeStreamOptions: { flags: 'a', mode: 0777 }
+    });
+
+    child.on('message', function (error) {
+
+        expect(error).to.not.exist();
+    });
+
+    child.on('exit', function (code) {
+
+        expect(code).to.equal(1);
+        expect(Fs.existsSync(logPath)).to.be.true();
+
+        done();
+    });
+});
+
+it('can log uncaught exceptions to the existing log file with append options and exits process', function (done) {
+
+    var child = fork('./test/worker');
+
+    child.send({
+        logPath: logPath,
+        writeStreamOptions: { flags: 'a', mode: 0665 }
+    });
+
+    child.on('message', function (error) {
+
+        expect(error).to.not.exist();
+    });
+
+    child.on('exit', function (code) {
+
+        expect(code).to.equal(1);
+        expect(Fs.existsSync(logPath)).to.be.true();
+        Fs.unlinkSync(logPath);
+
+        done();
+    });
 });
 
 it('can handle SIGUSR1 events', function (done) {
@@ -129,10 +148,11 @@ it('can handle SIGUSR1 events', function (done) {
             for (var i = 0, il = files.length; i < il; ++i) {
                 if (files[i].indexOf('heapdump-') === 0) {
                     heapsAfter++;
+                    Fs.unlinkSync(Path.join(__dirname, '..', files[i]));
                 }
             }
 
-            expect(heapsAfter).to.equal(2);
+            expect(heapsAfter).to.equal(4);
             done();
         });
     }, 500);
