@@ -45,6 +45,29 @@ server.register({
 });
 ```
 
+It is also possible to override the default write stream options used to generate the log file. In the previous example, the `a` flag can be passed to `server.register` so exceptions are now appended.
+
+```javascript
+'use strict';
+
+var Path = require('path');
+var Hapi = require('hapi');
+var Poop = require('poop');
+var server = new Hapi.Server();
+
+server.register({
+    register: Poop,
+    options: {
+        logPath: Path.join(__dirname, 'poop.log'),
+        writeStreamOptions: {
+            flags: 'a'
+        }
+    }
+}, function () {
+
+    throw new Error('uncaught');
+});
+```
 ## Settings
 
 The following options are available when configuring **poop**.
@@ -53,3 +76,15 @@ The following options are available when configuring **poop**.
 
 The file path to log any uncaught exception errors. Defaults to `poop.log` in
 the plugin folder.
+
+### `writeStreamOptions`
+
+An object for the write stream options. Defaults to:
+```javascript
+{
+    flags: 'w',
+    encoding: null,
+    fd: null,
+    mode: 0666
+}
+```
