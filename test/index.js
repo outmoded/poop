@@ -1,36 +1,21 @@
+'use strict';
+
 // Load modules
 
-var Code = require('code');
-var Lab = require('lab');
 var Fs = require('fs');
-var Hapi = require('hapi');
+var Os = require('os');
 var Path = require('path');
-var ChildProcess = require('child_process');
+var Code = require('code');
+var Hapi = require('hapi');
+var Lab = require('lab');
+var Poop = require('../lib');
+var PoopUtils = require('../lib/utils');
 
 
 // Declare internals
 
-var internals = {};
-
-internals.createServer = function () {
-
-    var server = new Hapi.Server();
-    server.connection();
-    return server;
-};
-
-internals.registerPlugin = function (connection, pluginOptions, callBack) {
-
-    connection.register({
-        register: require('../'),
-        options: pluginOptions
-    }, function (err) {
-
-        expect(err).to.not.exist();
-        if (typeof callBack === 'function') {
-            callBack.call();
-        }
-    });
+var internals = {
+    logPath: Path.join(__dirname, 'test.log')
 };
 
 
@@ -38,25 +23,108 @@ internals.registerPlugin = function (connection, pluginOptions, callBack) {
 
 var lab = exports.lab = Lab.script();
 var expect = Code.expect;
+var describe = lab.describe;
 var it = lab.it;
-var fork = ChildProcess.fork;
-var logPath = __dirname + '/test1.log';
 
-// Tests
 
-it('can register the plugin', function (done) {
+describe('Poop', function () {
 
-    var server = internals.createServer();
-    internals.registerPlugin(server, {
-        logPath: logPath
-    }, function (err) {
+    lab.afterEach(function (done) {
 
-        expect(err).to.not.exist();
+        internals.cleanup(done);
+    });
 
-        var other = internals.createServer();
-        internals.registerPlugin(other, {
-            logPath: logPath
-        }, function (err) {
+    it('logs uncaught exceptions, takes dump, and exits process', function (done) {
+
+        internals.prepareServer(function (err, server) {
+
+            var orig = process.exit;
+
+            process.exit = function (code) {
+
+                process.exit = orig;
+                expect(code).to.equal(1);
+
+                var exception = JSON.parse(Fs.readFileSync(internals.logPath, 'utf8'));
+
+                expect(exception.message).to.equal('test');
+                expect(exception.stack).to.be.a.string();
+                expect(exception.timestamp).to.be.a.number();
+                Fs.unlinkSync(internals.logPath);
+                internals.countHeaps(function (err, count) {
+
+                    expect(err).to.not.exist();
+                    expect(count).to.equal(1);
+                    done();
+                });
+            };
+
+            process.emit('uncaughtException', new Error('test'));
+        });
+    });
+
+    it('takes dump on SIGUSR1 events', function (done) {
+
+        internals.prepareServer(function (err, server) {
+
+            expect(err).to.not.exist();
+            process.emit('SIGUSR1');
+            internals.countHeaps(function (err, count) {
+
+                expect(err).to.not.exist();
+                expect(count).to.equal(1);
+                done();
+            });
+        });
+    });
+
+    it('configures the the log file', function (done) {
+
+        var err1 = new Error('test 1');
+        var err2 = new Error('test 2');
+        var options = {
+            logPath: Path.join(__dirname, 'config.log'),
+            writeStreamOptions: { flags: 'a' }
+        };
+
+        PoopUtils.log(err1, options, function () {
+
+            PoopUtils.log(err2, options, function () {
+
+                var exceptions = Fs.readFileSync(options.logPath, 'utf8').split(Os.EOL);
+                var ex1 = JSON.parse(exceptions[0]);
+                var ex2 = JSON.parse(exceptions[1]);
+
+                expect(ex1.message).to.equal('test 1');
+                expect(ex1.stack).to.be.a.string();
+                expect(ex1.timestamp).to.be.a.number();
+                expect(ex2.message).to.equal('test 2');
+                expect(ex2.stack).to.be.a.string();
+                expect(ex2.timestamp).to.be.a.number();
+                Fs.unlinkSync(options.logPath);
+                done();
+            });
+        });
+    });
+
+    it('can register the plugin multiple times', function (done) {
+
+        internals.prepareServer(function (err, server) {
+
+            expect(err).to.not.exist();
+            expect(server).to.exist();
+            internals.prepareServer(function (err, other) {
+
+                expect(err).to.not.exist();
+                expect(other).to.exist();
+                done();
+            });
+        });
+    });
+
+    it('can handle null options in register()', function (done) {
+
+        Poop.register({}, null, function (err) {
 
             expect(err).to.not.exist();
             done();
@@ -64,103 +132,58 @@ it('can register the plugin', function (done) {
     });
 });
 
-it('can log uncaught exceptions to the file provided and exits process', function (done) {
 
-    var server = internals.createServer();
-    internals.registerPlugin(server, {
-        logPath: logPath
+internals.prepareServer = function (callback) {
+
+    var server = new Hapi.Server();
+
+    server.connection();
+    server.register({
+        register: Poop,
+        options: { logPath: internals.logPath }
     }, function (err) {
 
         expect(err).to.not.exist();
+        callback(null, server);
     });
+};
 
-    process.exit = function (code) {
 
-        expect(code).to.equal(1);
-        expect(Fs.existsSync(logPath)).to.be.true();
-        Fs.unlinkSync(logPath);
+internals.countHeaps = function (callback) {
 
-        done();
-    };
+    Fs.readdir(Path.join(__dirname, '..'), function (err, files) {
 
-    process.emit('uncaughtException', new Error('test'));
-});
+        if (err) {
+            return callback(err);
+        }
 
-it('can log uncaught exceptions to the file provided with write options and exits process', function (done) {
+        var count = 0;
 
-    var child = fork('./test/worker');
-
-    child.send({
-        logPath: logPath,
-        writeStreamOptions: { flags: 'a', mode: 0777 }
-    });
-
-    child.on('message', function (error) {
-
-        expect(error).to.not.exist();
-    });
-
-    child.on('exit', function (code) {
-
-        expect(code).to.equal(1);
-        expect(Fs.existsSync(logPath)).to.be.true();
-
-        done();
-    });
-});
-
-it('can log uncaught exceptions to the existing log file with append options and exits process', function (done) {
-
-    var child = fork('./test/worker');
-
-    child.send({
-        logPath: logPath,
-        writeStreamOptions: { flags: 'a', mode: 0665 }
-    });
-
-    child.on('message', function (error) {
-
-        expect(error).to.not.exist();
-    });
-
-    child.on('exit', function (code) {
-
-        expect(code).to.equal(1);
-        expect(Fs.existsSync(logPath)).to.be.true();
-        Fs.unlinkSync(logPath);
-
-        done();
-    });
-});
-
-it('can handle SIGUSR1 events', function (done) {
-
-    var server = internals.createServer();
-    internals.registerPlugin(server, { logPath: logPath });
-
-    setTimeout(function () {
-
-        process.emit('SIGUSR1');
-
-        Fs.readdir(Path.join(__dirname, '..'), function (err, files) {
-
-            var heapsAfter = 0;
-            for (var i = 0, il = files.length; i < il; ++i) {
-                if (files[i].indexOf('heapdump-') === 0) {
-                    heapsAfter++;
-                    Fs.unlinkSync(Path.join(__dirname, '..', files[i]));
-                }
+        for (var i = 0, il = files.length; i < il; ++i) {
+            if (files[i].indexOf('heapdump-') === 0) {
+                count++;
             }
+        }
 
-            expect(heapsAfter).to.equal(4);
-            done();
-        });
-    }, 500);
-});
+        return callback(null, count);
+    });
+};
 
-it('can handle null options in register()', function (done) {
 
-    var Poop = require('../');
+internals.cleanup = function (callback) {
 
-    Poop.register({}, null, done);
-});
+    Fs.readdir(Path.join(__dirname, '..'), function (err, files) {
+
+        if (err) {
+            return callback(err);
+        }
+
+        for (var i = 0, il = files.length; i < il; ++i) {
+            if (files[i].indexOf('heapdump-') === 0) {
+                Fs.unlinkSync(Path.join(__dirname, '..', files[i]));
+            }
+        }
+
+        return callback();
+    });
+};

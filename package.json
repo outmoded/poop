@@ -1,15 +1,17 @@
 {
   "name": "poop",
-  "description": "Plugin for taking a process dump on uncaught exception",
   "version": "1.2.5",
-  "repository": "git://github.com/hapijs/poop",
+  "description": "Hapi plugin for taking a process dump on uncaught exception",
   "main": "lib/index.js",
-  "keywords": [
-    "hapi",
-    "exception",
-    "dump",
-    "plugin"
-  ],
+  "homepage": "https://github.com/hapijs/poop",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/hapijs/poop.git"
+  },
+  "bugs": {
+    "url": "https://github.com/hapijs/poop/issues"
+  },
+  "license": "BSD-3-Clause",
   "engines": {
     "node": ">=0.10.x"
   },
@@ -18,7 +20,7 @@
     "hoek": "2.x.x"
   },
   "devDependencies": {
-    "hapi": "8.x.x",
+    "hapi": "9.x.x",
     "lab": "5.x.x",
     "code": "1.x.x"
   },
@@ -26,5 +28,10 @@
     "test": "lab -t 100 -v -L -a code",
     "test-cov-html": "lab -a code -r html -o coverage.html"
   },
-  "license": "BSD-3-Clause"
+  "keywords": [
+    "hapi",
+    "exception",
+    "dump",
+    "plugin"
+  ]
 }
