@@ -151,7 +151,7 @@ internals.prepareServer = function (callback) {
 
 internals.countHeaps = function (callback) {
 
-    Fs.readdir(Path.join(__dirname, '..'), function (err, files) {
+    Fs.readdir(Path.dirname(process.mainModule.filename), function (err, files) {
 
         if (err) {
             return callback(err);
@@ -172,7 +172,7 @@ internals.countHeaps = function (callback) {
 
 internals.cleanup = function (callback) {
 
-    Fs.readdir(Path.join(__dirname, '..'), function (err, files) {
+    Fs.readdir(Path.dirname(process.mainModule.filename), function (err, files) {
 
         if (err) {
             return callback(err);
@@ -180,7 +180,7 @@ internals.cleanup = function (callback) {
 
         for (var i = 0, il = files.length; i < il; ++i) {
             if (files[i].indexOf('heapdump-') === 0) {
-                Fs.unlinkSync(Path.join(__dirname, '..', files[i]));
+                Fs.unlinkSync(Path.join(Path.dirname(process.mainModule.filename), files[i]));
             }
         }
 
