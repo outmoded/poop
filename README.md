@@ -51,10 +51,14 @@ server.register({
 
 The following options are available when configuring `poop`.
 
+### `heapdumpFolder`
+
+The directory to place heap dump files. Defaults to the process current working directory.
+
 ### `logPath`
 
 The file path to log any uncaught exception errors. Defaults to `poop.log` in
-the plugin folder.
+the process current working directory.
 
 ### `writeStreamOptions`
 
