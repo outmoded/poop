@@ -12,6 +12,7 @@ Lead Maintainer: [Colin Ihrig](https://github.com/cjihrig)
 - [Overview](#overview)
 - [Example](#example)
 - [Settings](#settings)
+    - [`heapdumpFolder`](#heapdumpfolder)
     - [`logPath`](#logpath)
     - [`writeStreamOptions`](#writestreamoptions)
 
