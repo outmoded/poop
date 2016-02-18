@@ -38,6 +38,8 @@ describe('Poop', () => {
 
         internals.prepareServer((err, server) => {
 
+            expect(err).to.not.exist();
+
             const orig = process.exit;
 
             process.exit = function (code) {
