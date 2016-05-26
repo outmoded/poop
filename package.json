@@ -19,7 +19,7 @@
     "heapdump": "0.3.x"
   },
   "devDependencies": {
-    "code": "2.x.x",
+    "code": "3.x.x",
     "hapi": "13.x.x",
     "lab": "10.x.x"
   },
