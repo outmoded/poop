@@ -5,6 +5,7 @@ env:
 node_js:
   - "4"
   - "6"
+  - "7"
   - "node"
 addons:
   apt:
