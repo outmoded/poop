@@ -10,6 +10,7 @@ const Hapi = require('hapi');
 const Lab = require('lab');
 const Poop = require('../lib');
 const PoopUtils = require('../lib/utils');
+const Proxyquire = require('proxyquire');
 
 
 // Declare internals
@@ -106,6 +107,61 @@ describe('Poop', () => {
                 Fs.unlinkSync(options.logPath);
                 done();
             });
+        });
+    });
+
+    it('creates the log directory if necessary', (done) => {
+
+        const err1 = new Error('test 1');
+        const err2 = new Error('test 2');
+        const options = {
+            logPath: Path.join(__dirname, 'foo', 'bar', 'config.log'),
+            writeStreamOptions: { flags: 'a' }
+        };
+
+        PoopUtils.log(err1, options, () => {
+
+            PoopUtils.log(err2, options, () => {
+
+                const exceptions = Fs.readFileSync(options.logPath, 'utf8').split(Os.EOL);
+                const ex1 = JSON.parse(exceptions[0]);
+                const ex2 = JSON.parse(exceptions[1]);
+
+                expect(ex1.message).to.equal('test 1');
+                expect(ex1.stack).to.be.a.string();
+                expect(ex1.timestamp).to.be.a.number();
+                expect(ex2.message).to.equal('test 2');
+                expect(ex2.stack).to.be.a.string();
+                expect(ex2.timestamp).to.be.a.number();
+                Fs.unlinkSync(options.logPath);
+                Fs.rmdirSync(Path.join(__dirname, 'foo', 'bar'));
+                Fs.rmdirSync(Path.join(__dirname, 'foo'));
+                done();
+            });
+        });
+    });
+
+    it('handles any errors during directory creation', (done) => {
+
+        const mockUtils = Proxyquire('../lib/utils', {
+
+            'mkdirp':  function (path, callback) {
+
+                callback(new Error('mock error'));
+            }
+        });
+
+        const err1 = new Error('test 1');
+        const options = {
+            logPath: Path.join(__dirname, 'config.log'),
+            writeStreamOptions: { flags: 'a' }
+        };
+
+        mockUtils.log(err1, options, (err) => {
+
+            expect(err).to.be.an.error();
+            expect(err.message).to.equal('mock error');
+            done();
         });
     });
 
