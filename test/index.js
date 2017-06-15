@@ -133,6 +133,8 @@ describe('Poop', () => {
                 expect(ex2.stack).to.be.a.string();
                 expect(ex2.timestamp).to.be.a.number();
                 Fs.unlinkSync(options.logPath);
+                Fs.rmdirSync(Path.join(__dirname, 'foo', 'bar'));
+                Fs.rmdirSync(Path.join(__dirname, 'foo'));
                 done();
             });
         });
