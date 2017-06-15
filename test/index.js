@@ -10,6 +10,7 @@ const Hapi = require('hapi');
 const Lab = require('lab');
 const Poop = require('../lib');
 const PoopUtils = require('../lib/utils');
+const Proxyquire = require('proxyquire');
 
 
 // Declare internals
@@ -137,6 +138,30 @@ describe('Poop', () => {
                 Fs.rmdirSync(Path.join(__dirname, 'foo'));
                 done();
             });
+        });
+    });
+
+    it('handles any errors during directory creation', (done) => {
+
+        const mockUtils = Proxyquire('../lib/utils', {
+
+            'mkdirp':  function (path, callback) {
+
+                callback(new Error('mock error'));
+            }
+        });
+
+        const err1 = new Error('test 1');
+        const options = {
+            logPath: Path.join(__dirname, 'config.log'),
+            writeStreamOptions: { flags: 'a' }
+        };
+
+        mockUtils.log(err1, options, (err) => {
+
+            expect(err).to.be.an.error();
+            expect(err.message).to.equal('mock error');
+            done();
         });
     });
 
