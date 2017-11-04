@@ -16,13 +16,14 @@
     "node": ">=4.0.0"
   },
   "dependencies": {
-    "heapdump": "0.3.x"
+    "heapdump": "0.3.x",
+    "mkdirp": "0.5.1",
+    "teamwork": "3.x.x"
   },
   "devDependencies": {
     "code": "5.x.x",
     "hapi": "17.x.x",
-    "lab": "15.x.x",
-    "teamwork": "3.x.x"
+    "lab": "15.x.x"
   },
   "scripts": {
     "test": "lab -t 100 -v -L -a code",

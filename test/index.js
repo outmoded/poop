@@ -67,7 +67,7 @@ describe('Poop', () => {
         expect(internals.countHeaps()).to.equal(1);
     });
 
-    it('configures the the log file', () => {
+    it('configures the the log file', async () => {
 
         const err1 = new Error('test 1');
         const err2 = new Error('test 2');
@@ -76,23 +76,20 @@ describe('Poop', () => {
             writeStreamOptions: { flags: 'a' }
         };
 
-        PoopUtils.log(err1, options, () => {
+        await PoopUtils.log(err1, options);
+        await PoopUtils.log(err2, options);
 
-            PoopUtils.log(err2, options, () => {
+        const exceptions = Fs.readFileSync(options.logPath, 'utf8').split(Os.EOL);
+        const ex1 = JSON.parse(exceptions[0]);
+        const ex2 = JSON.parse(exceptions[1]);
 
-                const exceptions = Fs.readFileSync(options.logPath, 'utf8').split(Os.EOL);
-                const ex1 = JSON.parse(exceptions[0]);
-                const ex2 = JSON.parse(exceptions[1]);
-
-                expect(ex1.message).to.equal('test 1');
-                expect(ex1.stack).to.be.a.string();
-                expect(ex1.timestamp).to.be.a.number();
-                expect(ex2.message).to.equal('test 2');
-                expect(ex2.stack).to.be.a.string();
-                expect(ex2.timestamp).to.be.a.number();
-                Fs.unlinkSync(options.logPath);
-            });
-        });
+        expect(ex1.message).to.equal('test 1');
+        expect(ex1.stack).to.be.a.string();
+        expect(ex1.timestamp).to.be.a.number();
+        expect(ex2.message).to.equal('test 2');
+        expect(ex2.stack).to.be.a.string();
+        expect(ex2.timestamp).to.be.a.number();
+        Fs.unlinkSync(options.logPath);
     });
 
     it('can register the plugin multiple times', async () => {
