@@ -8,6 +8,7 @@ const Path = require('path');
 const Code = require('code');
 const Hapi = require('hapi');
 const Lab = require('lab');
+const Teamwork = require('teamwork');
 const Poop = require('../lib');
 const PoopUtils = require('../lib/utils');
 
@@ -22,65 +23,51 @@ const internals = {
 // Test shortcuts
 
 const lab = exports.lab = Lab.script();
+const { describe, it } = lab;
 const expect = Code.expect;
-const describe = lab.describe;
-const it = lab.it;
 
 
 describe('Poop', () => {
 
-    lab.afterEach((done) => {
+    lab.afterEach(() => {
 
-        internals.cleanup(done);
+        internals.cleanup();
     });
 
-    it('logs uncaught exceptions, takes dump, and exits process', (done) => {
+    it('logs uncaught exceptions, takes dump, and exits process', async () => {
 
-        internals.prepareServer((err, server) => {
+        const team = new Teamwork();
+        const orig = process.exit;
 
-            expect(err).to.not.exist();
+        process.removeAllListeners('uncaughtException');
+        await internals.prepareServer();
+        process.exit = function (code) {
 
-            const orig = process.exit;
+            process.exit = orig;
+            expect(code).to.equal(1);
 
-            process.exit = function (code) {
+            const exception = JSON.parse(Fs.readFileSync(internals.logPath, 'utf8'));
 
-                process.exit = orig;
-                expect(code).to.equal(1);
+            expect(exception.message).to.equal('test');
+            expect(exception.stack).to.be.a.string();
+            expect(exception.timestamp).to.be.a.number();
+            Fs.unlinkSync(internals.logPath);
+            expect(internals.countHeaps()).to.equal(1);
+            team.attend();
+        };
 
-                const exception = JSON.parse(Fs.readFileSync(internals.logPath, 'utf8'));
-
-                expect(exception.message).to.equal('test');
-                expect(exception.stack).to.be.a.string();
-                expect(exception.timestamp).to.be.a.number();
-                Fs.unlinkSync(internals.logPath);
-                internals.countHeaps((err, count) => {
-
-                    expect(err).to.not.exist();
-                    expect(count).to.equal(1);
-                    done();
-                });
-            };
-
-            process.emit('uncaughtException', new Error('test'));
-        });
+        process.emit('uncaughtException', new Error('test'));
+        await team.work;
     });
 
-    it('takes dump on SIGUSR1 events', (done) => {
+    it('takes dump on SIGUSR1 events', async () => {
 
-        internals.prepareServer((err, server) => {
-
-            expect(err).to.not.exist();
-            process.emit('SIGUSR1');
-            internals.countHeaps((err, count) => {
-
-                expect(err).to.not.exist();
-                expect(count).to.equal(1);
-                done();
-            });
-        });
+        await internals.prepareServer();
+        process.emit('SIGUSR1');
+        expect(internals.countHeaps()).to.equal(1);
     });
 
-    it('configures the the log file', (done) => {
+    it('configures the the log file', () => {
 
         const err1 = new Error('test 1');
         const err2 = new Error('test 2');
@@ -104,88 +91,63 @@ describe('Poop', () => {
                 expect(ex2.stack).to.be.a.string();
                 expect(ex2.timestamp).to.be.a.number();
                 Fs.unlinkSync(options.logPath);
-                done();
             });
         });
     });
 
-    it('can register the plugin multiple times', (done) => {
+    it('can register the plugin multiple times', async () => {
 
-        internals.prepareServer((err, server) => {
-
-            expect(err).to.not.exist();
-            expect(server).to.exist();
-            internals.prepareServer((err, other) => {
-
-                expect(err).to.not.exist();
-                expect(other).to.exist();
-                done();
-            });
-        });
+        const server1 = await internals.prepareServer();
+        expect(server1).to.exist();
+        const server2 = await internals.prepareServer();
+        expect(server2).to.exist();
     });
 
-    it('can handle null options in register()', (done) => {
+    it('can handle null options in register()', () => {
 
-        Poop.register({}, null, (err) => {
+        expect(() => {
 
-            expect(err).to.not.exist();
-            done();
-        });
+            Poop.register({}, null);
+        }).to.not.throw();
     });
 });
 
 
-internals.prepareServer = function (callback) {
+internals.prepareServer = async function () {
 
-    const server = new Hapi.Server();
+    const server = Hapi.server();
 
-    server.connection();
-    server.register({
-        register: Poop,
+    await server.register({
+        plugin: Poop,
         options: { logPath: internals.logPath }
-    }, (err) => {
-
-        expect(err).to.not.exist();
-        callback(null, server);
     });
+
+    return server;
 };
 
 
-internals.countHeaps = function (callback) {
+internals.countHeaps = function () {
 
-    Fs.readdir(process.cwd(), (err, files) => {
+    const files = Fs.readdirSync(process.cwd());
+    let count = 0;
 
-        if (err) {
-            return callback(err);
+    for (let i = 0; i < files.length; ++i) {
+        if (files[i].indexOf('heapdump-') === 0) {
+            count++;
         }
+    }
 
-        let count = 0;
-
-        for (let i = 0; i < files.length; ++i) {
-            if (files[i].indexOf('heapdump-') === 0) {
-                count++;
-            }
-        }
-
-        return callback(null, count);
-    });
+    return count;
 };
 
 
-internals.cleanup = function (callback) {
+internals.cleanup = function () {
 
-    Fs.readdir(process.cwd(), (err, files) => {
+    const files = Fs.readdirSync(process.cwd());
 
-        if (err) {
-            return callback(err);
+    for (let i = 0; i < files.length; ++i) {
+        if (files[i].indexOf('heapdump-') === 0) {
+            Fs.unlinkSync(Path.join(process.cwd(), files[i]));
         }
-
-        for (let i = 0; i < files.length; ++i) {
-            if (files[i].indexOf('heapdump-') === 0) {
-                Fs.unlinkSync(Path.join(process.cwd(), files[i]));
-            }
-        }
-
-        return callback();
-    });
+    }
 };
