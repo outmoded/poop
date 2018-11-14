@@ -1,6 +1,6 @@
 {
   "name": "poop",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "description": "Hapi plugin for taking a process dump on uncaught exception",
   "main": "lib/index.js",
   "homepage": "https://github.com/hapijs/poop",
