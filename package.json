@@ -12,9 +12,6 @@
     "url": "https://github.com/hapijs/poop/issues"
   },
   "license": "BSD-3-Clause",
-  "engines": {
-    "node": ">=8.0.0"
-  },
   "dependencies": {
     "heapdump": "0.3.x",
     "mkdirp": "0.5.1",
